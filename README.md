@@ -18,11 +18,13 @@ Be sure that the needed docker images are on your machine
 2. _Wordpress_ runs at **localhost**
 
 ### Observations
-Some threads have mentioned issues with the file upload size being too small. To increase the size, you will need to first create a file named "uploads.ini" in the root of the project. Then modify "docker-compose.yml" from this
+Some threads have mentioned issues with the file upload size being too small. To increase the size, you will need to first create a file named "uploads.ini" in the root of the project. Then modify "docker-compose.yml" from this:
 
 ```
 volumes: ["./wp-content:/var/www/html/wp-content"]
 ```
+
+to this:
 
 ```
 volumes: ["./wp-content:/var/www/html/wp-content", "./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini"]
