@@ -1,0 +1,62 @@
+version: '3.7'
+
+services:
+
+  db:
+    container_name: mysql57
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: someRootPassword  # reset this root password – also note that is corresponds to the user 'root'
+      MYSQL_DATABASE: someDatabase  # this is optional but if a value is given, a database with this name will be created when the image starts up
+      MYSQL_USER: someUser  # reset this username
+      MYSQL_PASSWORD: somePassword  # reset this password which corresponds to the username immediately above this line
+
+  phpmyadmin:
+    container_name: phpmyadmin
+    depends_on: ["db"]
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports: ["8080:80"]
+    environment:
+      PMA_HOST: db
+
+  wordpress:
+    container_name: wordpress
+    depends_on:
+      - db
+    image: wordpress:latest
+    ports: ["80:80", "443:443"]
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306  # it appears that 'localhost' is implied here but I have not yet found documentation that states this
+      WORDPRESS_DB_USER: someUser  # reset this username
+      WORDPRESS_DB_PASSWORD: somePassword  # reset this password
+      WORDPRESS_DB_NAME: someDatabase  # the name of the database – if it does not already exist on the MySQL server, it will be created
+      WORDPRESS_TABLE_PREFIX: wp_  # replace this with a custom prefix
+    working_dir: /var/www/html
+    volumes: ["./wp-content:/var/www/html/wp-content"]
+volumes:
+  db_data:
+
+
+# Documentation
+# https://hub.docker.com/_/mysql
+# https://hub.docker.com/r/phpmyadmin/phpmyadmin
+# https://hub.docker.com/_/wordpress
+#
+
+# TODO
+# The documentation for phpmyadmin/phpmyadmin says defining a value for `MYSQL_ROOT_PASSWORD` is mnandatory but it appears this is not necessary when a value for `PMA_HOST` is defined. Need to find the documentation behind this.
+# The documentation for wordpress say that if the database named in `WORDPRESS_DB_NAME` does not exist, it will be created. However, I observed database connection errors instead of the database being created
+
+# Observations
+# `docker-compose down -v` removes volumes so using this will also remove the data behind the database
+# Instead, use `docker-compose down` or `docker-compose stop`
+# The database named `MYSQL_DATABASE` within `db` will be created if it does not already exist but it will not overwrite the database if it does exist
+# I have yet to find where the data behind the database is actually persisted since `/var/lib/mysql` remains empty even when phpmyadmin sees data
+# At times the database is persisted and other times, it is not when using `docker-compose down`. Be sure to always back it up until this is resolved.
